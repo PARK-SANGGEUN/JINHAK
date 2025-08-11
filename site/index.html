@@ -2,23 +2,64 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <title>문서 검색</title>
+  <title>진학 데이터 검색</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css" />
-  <script src="https://cdn.jsdelivr.net/npm/flexsearch@0.7.31/dist/flexsearch.bundle.min.js"></script>
 </head>
 <body>
-  <header class="wrap">
-    <h1>문서 검색</h1>
-    <p class="sub">PDF · PPTX · XLSX · TXT 검색 (서버 없음 / GitHub Pages)</p>
-    <input id="q" class="search" type="search" placeholder="검색어를 입력하세요" autofocus />
+  <!-- 로그인 오버레이 -->
+  <div id="auth" class="auth">
+    <div class="auth-card">
+      <div class="brand">
+        <div class="logo">▲</div>
+        <div>
+          <div class="brand-title">진학오름</div>
+          <div class="brand-sub">강원에서 시작하는 대학의 길</div>
+        </div>
+      </div>
+
+      <h2>접속하기</h2>
+      <p class="muted">교사용 계정으로 로그인하세요.</p>
+
+      <label>아이디</label>
+      <input id="loginUser" class="input" placeholder="teacher" autocomplete="username" />
+      <label>비밀번호</label>
+      <input id="loginPass" class="input" type="password" placeholder="••••••••" autocomplete="current-password" />
+
+      <button id="loginBtn" class="btn primary">로그인</button>
+      <p id="loginMsg" class="error" style="display:none;">아이디 또는 비밀번호가 올바르지 않습니다.</p>
+    </div>
+  </div>
+
+  <!-- 메인 -->
+  <header class="wrap head">
+    <div class="brand">
+      <div class="logo">▲</div>
+      <div>
+        <div class="brand-title">진학오름</div>
+        <div class="brand-sub">진학 데이터 검색</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="toggleTheme" class="btn ghost">🌓 테마</button>
+      <button id="logoutBtn" class="btn ghost">로그아웃</button>
+    </div>
   </header>
 
   <main class="wrap">
+    <div class="searchbar">
+      <input id="q" class="search" type="search" placeholder="예) 수시 강원대 분석 / 교과 전형 / 지역인재" autofocus />
+    </div>
+
     <ul id="results" class="results"></ul>
   </main>
 
-  <footer class="wrap foot"><small>© 검색 템플릿</small></footer>
+  <footer class="wrap foot">
+    <small>© 진학오름 • GitHub Pages</small>
+  </footer>
 
   <script src="./app.js"></script>
 </body>
