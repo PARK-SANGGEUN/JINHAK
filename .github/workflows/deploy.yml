@@ -1,12 +1,9 @@
-name: build-and-deploy
-
+name: build-and-deploy-min
 on:
   push:
     branches: [ "main" ]
     paths:
-      - "files/**"
       - "site/**"
-      - "scripts/**"
       - ".github/workflows/**"
   workflow_dispatch:
 
@@ -26,20 +23,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install Python deps
+      # index.json이 없으면 빈 배열로 생성 (페이지 로딩 에러 방지)
+      - name: Ensure index.json exists
         run: |
-          python -m pip install --upgrade pip
-          pip install pymupdf python-pptx openpyxl
-
-      - name: Build index (make site/index.json and copy files to site/files)
-        run: |
-          python scripts/indexer.py
-          echo "---- site listing ----"
+          mkdir -p site
+          [ -f site/index.json ] || echo "[]" > site/index.json
           ls -la site
 
       - name: Setup Pages
