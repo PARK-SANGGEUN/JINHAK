@@ -1,6 +1,54 @@
-// 엄격 검색: 모든 키워드가 실제로 포함된 레코드만 표시 (AND, 연속글자 일치)
-// PDF는 p.N, XLSX는 [시트!셀], PPTX는 slide N 표시 + 클릭 시 해당 위치/미리보기로 이동
+// 로그인 + 고급 정렬(가중치) + 엄격 AND 검색 + 하이라이트 + UI 동작
 
+// ========= 로그인 =========
+const authEl = document.getElementById('auth');
+const loginBtn = document.getElementById('loginBtn');
+const loginUser = document.getElementById('loginUser');
+const loginPass = document.getElementById('loginPass');
+const loginMsg  = document.getElementById('loginMsg');
+const logoutBtn = document.getElementById('logoutBtn');
+const toggleTheme = document.getElementById('toggleTheme');
+
+function isAuthed(){ return localStorage.getItem('jinhak_auth') === 'ok'; }
+function showAuth(v){ authEl.style.display = v ? 'grid' : 'none'; }
+
+function tryLogin(){
+  const u = (loginUser.value || '').trim();
+  const p = (loginPass.value || '').trim();
+  if(u === 'teacher' && p === 'teacher'){
+    localStorage.setItem('jinhak_auth', 'ok');
+    showAuth(false);
+    loginMsg.style.display = 'none';
+    // 포커스 이동
+    const q = document.getElementById('q'); q && q.focus();
+  }else{
+    loginMsg.style.display = 'block';
+  }
+}
+loginBtn?.addEventListener('click', tryLogin);
+loginPass?.addEventListener('keydown', (e)=>{ if(e.key==='Enter') tryLogin(); });
+
+logoutBtn?.addEventListener('click', ()=>{
+  localStorage.removeItem('jinhak_auth');
+  showAuth(true);
+  loginUser.focus();
+});
+
+// 초기 표시
+if(!isAuthed()) showAuth(true);
+
+// ========= 다크 테마 =========
+toggleTheme?.addEventListener('click', ()=>{
+  const root = document.documentElement;
+  const dark = root.classList.toggle('dark');
+  localStorage.setItem('jinhak_theme', dark ? 'dark' : 'light');
+});
+(function(){
+  const saved = localStorage.getItem('jinhak_theme');
+  if(saved === 'dark') document.documentElement.classList.add('dark');
+})();
+
+// ========= 검색 =========
 const q = document.getElementById('q');
 const list = document.getElementById('results');
 let DATA = [];
@@ -12,7 +60,7 @@ function highlight(text, terms){
   let out = text ?? '';
   const sorted = [...terms].sort((a,b)=>b.length-a.length);
   for(const t of sorted){
-    const re = new RegExp(esc(t), 'gi');      // 공백 무시 안 함(연속 글자만)
+    const re = new RegExp(esc(t), 'gi'); // 연속 글자만
     out = out.replace(re, m => `<mark>${m}</mark>`);
   }
   return out;
@@ -59,36 +107,51 @@ function termsOf(q){
   return q.split(/[,\s]+/g).map(s=>s.trim()).filter(Boolean);
 }
 
-function countMatches(hay, term){
-  const re = new RegExp(esc(term), 'gi');
-  const m = hay.match(re);
-  return m ? m.length : 0;
+// 가중치 점수: 제목×3 + 스니펫×2 + 본문×1, 키워드 모두(AND) 포함 필수
+function scoreDoc(d, terms){
+  const title = (d.title||'').toLowerCase();
+  const snip  = (d.snippet||'').toLowerCase();
+  const cont  = (d.content||'').toLowerCase();
+
+  // 모든 키워드가 최소 한 번은 들어가야 함(엄격 AND)
+  const okAll = terms.every(t => {
+    t = t.toLowerCase();
+    return title.includes(t) || snip.includes(t) || cont.includes(t);
+  });
+  if(!okAll) return -1;
+
+  const count = (hay, t) => {
+    const re = new RegExp(esc(t), 'gi');
+    const m = hay.match(re); return m ? m.length : 0;
+  };
+
+  let total = 0;
+  for(const t of terms){
+    const tt = t.toLowerCase();
+    total += count(title, tt) * 3;
+    total += count(snip,  tt) * 2;
+    total += count(cont,  tt) * 1;
+  }
+  return total;
 }
 
-// ★ 핵심: 모든 키워드가 '그 레코드' 안에 실제 포함되어 있어야 통과
 function search(query){
   const terms = termsOf(query);
   if(!terms.length){ render([], terms, query); return; }
-
-  const rows = [];
+  const scored = [];
   for(const d of DATA){
-    const hay = `${d.title||''} ${d.snippet||''} ${d.content||''}`.toLowerCase();
-
-    // 모든 키워드가 포함(AND) — 연속글자 기준
-    const okAll = terms.every(t => hay.includes(t.toLowerCase()));
-    if(!okAll) continue;
-
-    // 점수: 등장 횟수 합 (정렬용)
-    const score = terms.reduce((s,t)=> s + countMatches(hay, t.toLowerCase()), 0);
-    rows.push({ ...d, __score: score });
+    const s = scoreDoc(d, terms);
+    if(s > 0) scored.push({ ...d, __score: s });
   }
-  rows.sort((a,b)=> b.__score - a.__score);
-  render(rows.slice(0, 300), terms, query);
+  scored.sort((a,b)=> b.__score - a.__score);
+  render(scored.slice(0, 300), terms, query);
 }
 
-q.addEventListener('input', e => search(e.target.value.trim()));
+q?.addEventListener('input', e => search(e.target.value.trim()));
 
 load().then(()=>{
   const init = new URL(location).searchParams.get('q') || '';
   if(init){ q.value = init; search(init); }
+  // 로그인 상태면 바로 입력 포커스
+  if(isAuthed()) q?.focus();
 });
