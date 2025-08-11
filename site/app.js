@@ -1,46 +1,44 @@
-// 최소동작 버전: index.json을 불러와 단순 부분일치(공백 무시)로 필터링
 const q = document.getElementById('q');
 const list = document.getElementById('results');
-
 let DATA = [];
 
-function render(rows, query){
+const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+function highlight(text, terms){
+  if(!terms.length) return text;
+  let out = text;
+  // 긴 키워드부터 마킹(겹침 방지)
+  const sorted = [...terms].sort((a,b)=>b.length-a.length);
+  for(const t of sorted){
+    const re = new RegExp(esc(t), 'gi'); // 연속 글자만
+    out = out.replace(re, m => `<mark>${m}</mark>`);
+  }
+  return out;
+}
+
+function render(rows, terms){
   list.innerHTML = '';
-  if (!rows.length){
+  if(!rows.length){
     const li = document.createElement('li');
     li.className = 'card';
     li.textContent = '검색 결과가 없습니다.';
     list.appendChild(li);
     return;
   }
-  for (const d of rows){
+  for(const d of rows){
     const li = document.createElement('li');
     li.className = 'card';
-    const snippet = (d.snippet || d.content || '').slice(0, 140);
+    const raw = (d.snippet || d.content || '').replace(/\s+/g,' ').slice(0, 200);
     li.innerHTML = `
       <div class="meta"><span class="badge">${(d.fileType||'DOC').toUpperCase()}</span> ${d.file||''}</div>
       <div class="title"><a href="${d.link}" target="_blank" rel="noopener">${d.title}</a></div>
-      <div class="snippet">${snippet}...</div>
+      <div class="snippet">${highlight(raw, terms)}</div>
     `;
     list.appendChild(li);
   }
 }
 
-function normalize(s){
-  return (s || '').toLowerCase().replace(/\s+/g, ''); // 공백 제거
-}
-
-function search(query){
-  const nq = normalize(query);
-  if (!nq){ render([], ''); return; }
-  const hits = DATA.filter(d => {
-    const hay = normalize(`${d.title} ${d.snippet} ${d.content}`);
-    return hay.includes(nq);
-  });
-  render(hits.slice(0, 200), query);
-}
-
-async function boot(){
+async function load(){
   try{
     const res = await fetch('index.json', { cache: 'no-store' });
     DATA = await res.json();
@@ -48,9 +46,38 @@ async function boot(){
     console.error('index.json 로드 실패', e);
     DATA = [];
   }
-  const init = new URL(location).searchParams.get('q') || '';
-  if (init){ q.value = init; search(init); }
 }
 
-q.addEventListener('input', e => search(e.target.value));
-boot();
+function parseTerms(q){
+  return q.split(/[,\s]+/g).map(s=>s.trim()).filter(Boolean);
+}
+
+function countMatches(hay, term){
+  const re = new RegExp(esc(term), 'gi');
+  const m = hay.match(re);
+  return m ? m.length : 0;
+}
+
+// ★ AND + 연속글자 일치 + 등장횟수로 정렬
+function search(query){
+  const terms = parseTerms(query);
+  if(!terms.length){ render([], terms); return; }
+
+  const rows = [];
+  for(const d of DATA){
+    const hay = `${d.title||''} ${d.snippet||''} ${d.content||''}`.toLowerCase();
+    // 모든 단어가 포함(AND)
+    const ok = terms.every(t => hay.includes(t.toLowerCase()));
+    if(!ok) continue;
+    const score = terms.reduce((s,t)=> s + countMatches(hay, t.toLowerCase()), 0);
+    rows.push({ ...d, __score: score });
+  }
+  rows.sort((a,b)=> b.__score - a.__score);
+  render(rows.slice(0, 200), terms);
+}
+
+q.addEventListener('input', e => search(e.target.value.trim()));
+load().then(()=>{
+  const init = new URL(location).searchParams.get('q') || '';
+  if(init){ q.value = init; search(init); }
+});
