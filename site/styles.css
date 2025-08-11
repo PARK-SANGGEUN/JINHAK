@@ -1,30 +1,19 @@
 /* ===== Tokens ===== */
 :root{
-  --bg: #f6f7fb;
-  --panel: #ffffff;
-  --text: #0f172a;
-  --muted: #64748b;
-  --brand: #0b57d0;
-  --brand-2:#7c3aed;
-  --ring: #c7d2fe;
-  --badge: #e8eefc;
-  --mark: #fff59d;
-  --border: #e6e8ee;
-  --glass: rgba(255,255,255,.55);
-  --shadow: 0 12px 40px rgba(2,6,23,.08);
+  --bg:#f6f7fb; --panel:#fff; --text:#0f172a; --muted:#64748b;
+  --brand:#0b57d0; --brand-2:#7c3aed; --ring:#c7d2fe; --badge:#e8eefc;
+  --mark:#fff59d; --border:#e6e8ee; --glass:rgba(255,255,255,.55);
+  --shadow:0 12px 40px rgba(2,6,23,.08);
 }
 :root.dark{
   --bg:#0b1020; --panel:#0f162e; --text:#e5e7eb; --muted:#93a3b8;
-  --brand:#7aa2ff; --brand-2:#a78bfa; --ring:#2b3b77; --badge:#17213c; --mark:#665c15; --border:#1f2a44;
-  --glass: rgba(15,22,46,.55);
-  --shadow: 0 18px 50px rgba(0,0,0,.5);
+  --brand:#7aa2ff; --brand-2:#a78bfa; --ring:#2b3b77; --badge:#17213c;
+  --mark:#665c15; --border:#1f2a44; --glass:rgba(15,22,46,.55); --shadow:0 18px 50px rgba(0,0,0,.5);
 }
-
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
-  margin:0;
-  color:var(--text);
+  margin:0; color:var(--text);
   background:
     radial-gradient(1200px 600px at 10% -10%, #dbeafe66, transparent),
     radial-gradient(1200px 600px at 90% -20%, #e9d5ff55, transparent),
@@ -32,12 +21,9 @@ body{
   font-family:"Inter","Noto Sans KR",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
   letter-spacing:-.2px;
 }
-
-/* ===== Layout ===== */
 .wrap{max-width:1100px;margin:0 auto;padding:18px 20px}
 .head{display:flex;align-items:center;justify-content:space-between;padding-top:20px}
 
-/* ===== Brand ===== */
 .brand{display:flex;gap:14px;align-items:center}
 .logo{
   width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--brand-2));
@@ -56,69 +42,58 @@ body{
 .btn.ghost{background:transparent}
 .btn.primary{background:var(--brand);color:#fff;border-color:transparent}
 
-/* ===== Hero Banner ===== */
 .hero{
   background:
     radial-gradient(1200px 400px at 0% 0%, #ffffffbb, transparent),
     radial-gradient(1200px 400px at 100% 0%, #ffffff88, transparent);
 }
-.hero-inner{display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:center}
-.hero-copy h1{
-  margin:6px 0 8px;font-size:40px;font-weight:800;line-height:1.15;letter-spacing:-.6px
-}
+.hero.center .wrap{ text-align:center; display:flex; flex-direction:column; align-items:center; }
+.hero.center h1{ font-size:40px; font-weight:800; line-height:1.2; }
 .hero-copy h1 span{background:linear-gradient(135deg,var(--brand),var(--brand-2));-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero-sub{color:var(--muted);margin:0 0 18px;font-size:16px}
-.hero-art{
-  min-height:220px;border-radius:22px;border:1px solid var(--border);
-  background:var(--glass);box-shadow:var(--shadow);display:grid;place-items:center;overflow:hidden
-}
-.hero-art img{display:block;max-width:100%;height:auto}
-.hero-art.fallback{background:var(--panel)}
-.fallback-art{width:96%;height:auto}
-
+.hero-sub{color:var(--muted);margin:6px 0 18px;font-size:16px}
+.hero-search{ width:min(640px,100%); }
 .searchbar{margin:18px 0 6px}
 .search{
   width:100%;padding:18px 20px;border-radius:16px;border:1px solid var(--border);
   font-size:18px;background:var(--panel);box-shadow:var(--shadow)
 }
 
-/* ===== Results ===== */
-.results{list-style:none;padding:0;margin:28px 0 90px;display:grid;gap:16px}
+/* ===== 2-column results ===== */
+.results-grid{
+  display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start;
+}
+.col-head{
+  font-weight:800; margin-bottom:10px; letter-spacing:-.2px; color:var(--muted)
+}
+.results{list-style:none;padding:0;margin:0;display:grid;gap:14px}
 .card{
-  border:1px solid var(--border);background:var(--panel);border-radius:18px;padding:18px 20px;
-  box-shadow:var(--shadow);transition:transform .12s ease, box-shadow .12s ease
+  border:1px solid var(--border);background:var(--panel);border-radius:18px;padding:16px 18px;
+  box-shadow:var(--shadow);transition:.12s ease
 }
 .card:hover{transform:translateY(-2px)}
-.meta{color:var(--muted);display:flex;gap:10px;align-items:center;margin-bottom:8px;font-size:13px}
+.meta{color:var(--muted);display:flex;gap:10px;align-items:center;margin-bottom:6px;font-size:13px;flex-wrap:wrap}
 .badge{display:inline-block;padding:3px 9px;font-size:12px;border-radius:999px;background:var(--badge);color:var(--brand);border:1px solid var(--border)}
-.title{font-weight:800;margin-bottom:4px;letter-spacing:-.2px}
+.title{font-weight:800;margin-bottom:4px}
 .title a{color:var(--text);text-decoration:none}
 .title a:hover{color:var(--brand)}
 .snippet{line-height:1.7;font-size:15px}
 mark{background:var(--mark);padding:0 2px;border-radius:3px}
 
-/* ===== Footer ===== */
 .foot{color:var(--muted);border-top:1px dashed var(--border);margin-top:42px}
 
-/* ===== Auth (login) ===== */
-.auth{
-  position:fixed;inset:0;background:linear-gradient(180deg,#eef2ff88,#fafafa),rgba(0,0,0,.35);
-  display:none;place-items:center;backdrop-filter: blur(6px);z-index:50
-}
-.auth-card{
-  width:min(520px,92vw);background:var(--panel);border:1px solid var(--border);
-  border-radius:22px;box-shadow:var(--shadow);padding:26px 24px
-}
+/* 로그인 */
+.auth{ position:fixed; inset:0; background:linear-gradient(180deg,#eef2ff88,#fafafa),rgba(0,0,0,.35);
+  display:none; place-items:center; backdrop-filter: blur(6px); z-index:50 }
+.auth-card{ width:min(520px,92vw); background:var(--panel); border:1px solid var(--border);
+  border-radius:22px; box-shadow:var(--shadow); padding:26px 24px }
 .auth-card h2{margin:12px 0 6px}
 .muted{color:var(--muted);margin:0 0 18px}
-.input{
-  width:100%;padding:12px 12px;border:1px solid var(--border);border-radius:12px;background:var(--panel);margin-bottom:10px
-}
-.error{color:#ef4444;margin-top:8px}
+.input{ width:100%; padding:12px; border:1px solid var(--border); border-radius:12px; background:var(--panel); margin-bottom:10px }
+.error{ color:#ef4444; margin-top:8px }
 
-/* ===== Transitions / Responsive ===== */
-:root, :root.dark { transition: background-color .2s ease, color .2s ease }
+/* Responsive */
 @media (max-width: 900px){
-  .hero-inner{grid-template-columns:1fr;gap:18px}
-  .hero-copy h1{font-size:34px}
+  .results-grid{ grid-template-columns:1fr; }
+  .hero.center h1{ font-size:34px; }
 }
+:root, :root.dark { transition: background-color .2s ease, color .2s ease }
