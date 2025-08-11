@@ -1,3 +1,6 @@
+// AND 검색(모든 키워드 포함), 연속글자 일치, 등장횟수로 정렬
+// PDF는 p.N 표시 + 해당 페이지로 점프(#page=N)
+
 const q = document.getElementById('q');
 const list = document.getElementById('results');
 let DATA = [];
@@ -7,10 +10,9 @@ const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 function highlight(text, terms){
   if(!terms.length) return text;
   let out = text;
-  // 긴 키워드부터 마킹(겹침 방지)
   const sorted = [...terms].sort((a,b)=>b.length-a.length);
   for(const t of sorted){
-    const re = new RegExp(esc(t), 'gi'); // 연속 글자만
+    const re = new RegExp(esc(t), 'gi');
     out = out.replace(re, m => `<mark>${m}</mark>`);
   }
   return out;
@@ -26,11 +28,15 @@ function render(rows, terms){
     return;
   }
   for(const d of rows){
+    const pageBadge = (d.fileType === 'pdf' && d.page) ? ` · p.${d.page}` : '';
     const li = document.createElement('li');
     li.className = 'card';
     const raw = (d.snippet || d.content || '').replace(/\s+/g,' ').slice(0, 200);
     li.innerHTML = `
-      <div class="meta"><span class="badge">${(d.fileType||'DOC').toUpperCase()}</span> ${d.file||''}</div>
+      <div class="meta">
+        <span class="badge">${(d.fileType||'DOC').toUpperCase()}</span>
+        ${d.file || ''}${pageBadge}
+      </div>
       <div class="title"><a href="${d.link}" target="_blank" rel="noopener">${d.title}</a></div>
       <div class="snippet">${highlight(raw, terms)}</div>
     `;
@@ -58,7 +64,7 @@ function countMatches(hay, term){
   return m ? m.length : 0;
 }
 
-// ★ AND + 연속글자 일치 + 등장횟수로 정렬
+// AND + 연속글자 일치 + 등장횟수 정렬
 function search(query){
   const terms = parseTerms(query);
   if(!terms.length){ render([], terms); return; }
@@ -66,7 +72,6 @@ function search(query){
   const rows = [];
   for(const d of DATA){
     const hay = `${d.title||''} ${d.snippet||''} ${d.content||''}`.toLowerCase();
-    // 모든 단어가 포함(AND)
     const ok = terms.every(t => hay.includes(t.toLowerCase()));
     if(!ok) continue;
     const score = terms.reduce((s,t)=> s + countMatches(hay, t.toLowerCase()), 0);
