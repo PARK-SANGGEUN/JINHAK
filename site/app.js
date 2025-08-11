@@ -1,6 +1,7 @@
-// 로그인 + 고급 정렬(가중치) + 엄격 AND 검색 + 하이라이트 + UI 동작
+// 로그인/테마 유지 + 2단 컬럼 검색 렌더 + 가중치 정렬(제목×3, 스니펫×2, 본문×1)
+// AND 검색: 모든 키워드가 레코드 안에 실제 포함되어야 결과로 표시
 
-// ========= 로그인 =========
+// ===== 로그인/테마 =====
 const authEl = document.getElementById('auth');
 const loginBtn = document.getElementById('loginBtn');
 const loginUser = document.getElementById('loginUser');
@@ -13,44 +14,30 @@ function isAuthed(){ return localStorage.getItem('jinhak_auth') === 'ok'; }
 function showAuth(v){ authEl.style.display = v ? 'grid' : 'none'; }
 
 function tryLogin(){
-  const u = (loginUser.value || '').trim();
-  const p = (loginPass.value || '').trim();
+  const u = (loginUser?.value || '').trim();
+  const p = (loginPass?.value || '').trim();
   if(u === 'teacher' && p === 'teacher'){
     localStorage.setItem('jinhak_auth', 'ok');
-    showAuth(false);
-    loginMsg.style.display = 'none';
-    // 포커스 이동
-    const q = document.getElementById('q'); q && q.focus();
-  }else{
-    loginMsg.style.display = 'block';
-  }
+    showAuth(false); loginMsg.style.display='none';
+    document.getElementById('q')?.focus();
+  }else{ loginMsg.style.display='block'; }
 }
 loginBtn?.addEventListener('click', tryLogin);
 loginPass?.addEventListener('keydown', (e)=>{ if(e.key==='Enter') tryLogin(); });
-
-logoutBtn?.addEventListener('click', ()=>{
-  localStorage.removeItem('jinhak_auth');
-  showAuth(true);
-  loginUser.focus();
-});
-
-// 초기 표시
+logoutBtn?.addEventListener('click', ()=>{ localStorage.removeItem('jinhak_auth'); showAuth(true); loginUser.focus(); });
 if(!isAuthed()) showAuth(true);
 
-// ========= 다크 테마 =========
 toggleTheme?.addEventListener('click', ()=>{
   const root = document.documentElement;
   const dark = root.classList.toggle('dark');
   localStorage.setItem('jinhak_theme', dark ? 'dark' : 'light');
 });
-(function(){
-  const saved = localStorage.getItem('jinhak_theme');
-  if(saved === 'dark') document.documentElement.classList.add('dark');
-})();
+(function(){ if(localStorage.getItem('jinhak_theme')==='dark') document.documentElement.classList.add('dark'); })();
 
-// ========= 검색 =========
+// ===== 검색 =====
 const q = document.getElementById('q');
-const list = document.getElementById('results');
+const listX = document.getElementById('results-xlsx');
+const listE = document.getElementById('results-etc');
 let DATA = [];
 
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -60,19 +47,19 @@ function highlight(text, terms){
   let out = text ?? '';
   const sorted = [...terms].sort((a,b)=>b.length-a.length);
   for(const t of sorted){
-    const re = new RegExp(esc(t), 'gi'); // 연속 글자만
+    const re = new RegExp(esc(t), 'gi'); // 연속 글자 일치
     out = out.replace(re, m => `<mark>${m}</mark>`);
   }
   return out;
 }
 
-function render(rows, terms, query){
-  list.innerHTML = '';
+function renderColumn(el, rows, terms, query){
+  el.innerHTML = '';
   if(!rows.length){
     const li = document.createElement('li');
     li.className = 'card';
     li.textContent = '검색 결과가 없습니다.';
-    list.appendChild(li);
+    el.appendChild(li);
     return;
   }
   for(const d of rows){
@@ -89,7 +76,7 @@ function render(rows, terms, query){
       <div class="title"><a href="${href}" target="_blank" rel="noopener">${d.title}</a></div>
       <div class="snippet">${highlight(raw, terms)}</div>
     `;
-    list.appendChild(li);
+    el.appendChild(li);
   }
 }
 
@@ -103,20 +90,17 @@ async function load(){
   }
 }
 
-function termsOf(q){
-  return q.split(/[,\s]+/g).map(s=>s.trim()).filter(Boolean);
-}
+function termsOf(q){ return q.split(/[,\s]+/g).map(s=>s.trim()).filter(Boolean); }
 
-// 가중치 점수: 제목×3 + 스니펫×2 + 본문×1, 키워드 모두(AND) 포함 필수
-function scoreDoc(d, terms){
+function weightedScore(d, terms){
   const title = (d.title||'').toLowerCase();
   const snip  = (d.snippet||'').toLowerCase();
   const cont  = (d.content||'').toLowerCase();
 
   // 모든 키워드가 최소 한 번은 들어가야 함(엄격 AND)
-  const okAll = terms.every(t => {
-    t = t.toLowerCase();
-    return title.includes(t) || snip.includes(t) || cont.includes(t);
+  const okAll = terms.every(t=>{
+    const tt=t.toLowerCase();
+    return title.includes(tt)||snip.includes(tt)||cont.includes(tt);
   });
   if(!okAll) return -1;
 
@@ -125,26 +109,32 @@ function scoreDoc(d, terms){
     const m = hay.match(re); return m ? m.length : 0;
   };
 
-  let total = 0;
+  let s=0;
   for(const t of terms){
-    const tt = t.toLowerCase();
-    total += count(title, tt) * 3;
-    total += count(snip,  tt) * 2;
-    total += count(cont,  tt) * 1;
+    const tt=t.toLowerCase();
+    s += count(title, tt)*3 + count(snip, tt)*2 + count(cont, tt)*1;
   }
-  return total;
+  return s;
 }
 
 function search(query){
   const terms = termsOf(query);
-  if(!terms.length){ render([], terms, query); return; }
+  if(!terms.length){ listX.innerHTML=''; listE.innerHTML=''; return; }
+
   const scored = [];
   for(const d of DATA){
-    const s = scoreDoc(d, terms);
+    const s = weightedScore(d, terms);
     if(s > 0) scored.push({ ...d, __score: s });
   }
+  // 정렬: 점수 내림차순
   scored.sort((a,b)=> b.__score - a.__score);
-  render(scored.slice(0, 300), terms, query);
+
+  // 좌/우 분할
+  const left  = scored.filter(d => d.fileType === 'xlsx');
+  const right = scored.filter(d => d.fileType !== 'xlsx');
+
+  renderColumn(listX, left, terms, query);
+  renderColumn(listE, right, terms, query);
 }
 
 q?.addEventListener('input', e => search(e.target.value.trim()));
@@ -152,6 +142,5 @@ q?.addEventListener('input', e => search(e.target.value.trim()));
 load().then(()=>{
   const init = new URL(location).searchParams.get('q') || '';
   if(init){ q.value = init; search(init); }
-  // 로그인 상태면 바로 입력 포커스
   if(isAuthed()) q?.focus();
 });
