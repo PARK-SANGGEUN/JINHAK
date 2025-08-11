@@ -4,12 +4,13 @@
   <meta charset="utf-8" />
   <title>진학 데이터 검색</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&family=Noto+Sans+KR:wght@300..900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <!-- 로그인 오버레이 -->
+  <!-- 로그인 오버레이 (기존 기능 유지) -->
   <div id="auth" class="auth">
     <div class="auth-card">
       <div class="brand">
@@ -33,7 +34,7 @@
     </div>
   </div>
 
-  <!-- 메인 -->
+  <!-- 헤더 -->
   <header class="wrap head">
     <div class="brand">
       <div class="logo">▲</div>
@@ -44,16 +45,44 @@
     </div>
 
     <div class="actions">
-      <button id="toggleTheme" class="btn ghost">🌓 테마</button>
+      <button id="toggleTheme" class="btn ghost" title="테마 전환">🌓</button>
       <button id="logoutBtn" class="btn ghost">로그아웃</button>
     </div>
   </header>
 
-  <main class="wrap">
-    <div class="searchbar">
-      <input id="q" class="search" type="search" placeholder="예) 수시 강원대 분석 / 교과 전형 / 지역인재" autofocus />
-    </div>
+  <!-- 히어로 배너 -->
+  <section class="hero">
+    <div class="hero-inner wrap">
+      <div class="hero-copy">
+        <h1>강원에서 시작하는<br><span>진학 데이터 검색</span></h1>
+        <p class="hero-sub">PDF · PPTX · XLSX · HWPX까지, 필요한 정보만 정확하게.</p>
 
+        <div class="searchbar hero-search">
+          <input id="q" class="search" type="search"
+                 placeholder="예) 수시 강원대 분석 / 교과 전형 / 지역인재" autofocus />
+        </div>
+      </div>
+
+      <!-- 배너 이미지가 있으면 사용 (site/banner.png) -->
+      <div class="hero-art">
+        <img src="./banner.png" alt="" onerror="this.style.display='none';this.parentElement.classList.add('fallback')" />
+        <svg class="fallback-art" viewBox="0 0 320 180" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <defs>
+            <linearGradient id="g" x1="0" x2="1">
+              <stop offset="0" stop-color="#dbeafe"/>
+              <stop offset="1" stop-color="#e9d5ff"/>
+            </linearGradient>
+          </defs>
+          <rect width="320" height="180" rx="16" fill="url(#g)"/>
+          <path d="M24 120 Q 90 70 130 98 T 220 72 T 300 40" fill="none" stroke="#0b57d0" stroke-width="6" stroke-linecap="round"/>
+          <circle cx="300" cy="40" r="6" fill="#0b57d0"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- 결과 영역 -->
+  <main class="wrap">
     <ul id="results" class="results"></ul>
   </main>
 
