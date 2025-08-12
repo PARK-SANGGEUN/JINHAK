@@ -5,20 +5,15 @@
   const cell  = params.get('cell')  || '';
   const q     = params.get('q')     || '';
 
-  if(!src){ document.getElementById('grid').innerHTML='<div class="card">파일 경로가 없습니다.</div>'; return; }
-
-  document.getElementById('fileName').textContent = decodeURIComponent(src.split('/').pop());
-  document.getElementById('sheetName').textContent = sheet || '전체';
-  document.getElementById('cellAddr').textContent  = cell || '-';
-  document.getElementById('downloadLink').href = src;
-
   const esc = s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
   const terms = (q||'').split(/[,\s]+/g).map(s=>s.trim()).filter(Boolean);
-  const hasTerm = (v)=> terms.length && String(v??'').toLowerCase().includes(terms[0].toLowerCase()); // 간단 표시
+  const hasTerm = (v)=> terms.length && String(v??'').toLowerCase().includes(terms[0].toLowerCase());
 
   function colToIdx(col){ let n=0; for(let i=0;i<col.length;i++) n=n*26+(col.charCodeAt(i)-64); return n-1; }
   function splitAddr(addr){ const m=String(addr||'').match(/^([A-Z]+)(\d+)$/i); return m?{c:colToIdx(m[1].toUpperCase()), r:parseInt(m[2],10)-1}:null; }
   function windowAround(t, sR,eR,sC,eC){ return { r0:Math.max(sR,t.r-15), r1:Math.min(eR,t.r+15), c0:Math.max(sC,t.c-10), c1:Math.min(eC,t.c+10) }; }
+
+  if(!src){ document.getElementById('grid').innerHTML='<div class="muted" style="padding:8px">파일 경로가 없습니다.</div>'; return; }
 
   fetch(src).then(r=>r.arrayBuffer()).then(ab=>{
     const wb = XLSX.read(ab,{type:'array'});
@@ -60,9 +55,9 @@
     if(target){
       const rIndex=target.r-win.r0; const cIndex=target.c-win.c0+1;
       const t = grid.querySelector(`tbody tr:nth-child(${rIndex+1}) td:nth-child(${cIndex+1})`);
-      if(t) t.scrollIntoView({block:'center', inline:'center', behavior:'smooth'});
+      if(t) t.scrollIntoView({block:'center', inline:'center'});
     }
   }).catch(err=>{
-    document.getElementById('grid').innerHTML = `<div class="card">오류: ${String(err)}</div>`;
+    document.getElementById('grid').innerHTML = `<div class="muted" style="padding:8px">오류: ${String(err)}</div>`;
   });
 })();
