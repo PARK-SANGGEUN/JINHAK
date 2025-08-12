@@ -1,5 +1,6 @@
-// 단일 선택 칩(ALL/PDF/XLSX/PPTX/HWPX/TXT) + 선택된 것만 컬러 & 결과 필터
-// 나머지(로그인/다크/검색모드/정렬/시트·페이지 필터)는 기존과 동일
+// 로그인/테마 + 단일선택 타입칩 + 검색모드(files | all)
+// files 모드: 파일명으로만 AND 검색 + 제목 하이라이트, 스니펫 표시 안 함
+// all   모드: 파일명+본문(스니펫/전체텍스트) AND 검색 + 스니펫 표시
 
 //// 로그인/테마 ////
 const authEl = document.getElementById('auth');
@@ -45,13 +46,17 @@ const pdfGroup = document.getElementById('pdfGroup');
 const pdfMin = document.getElementById('pdfMin');
 const pdfMax = document.getElementById('pdfMax');
 
-const modeTitleBtn = document.getElementById('modeTitle');
+const modeFilesBtn = document.getElementById('modeFiles');
 const modeAllBtn   = document.getElementById('modeAll');
 
 let DATA = [];
 const TYPES = ['pdf','xlsx','pptx','hwpx','txt'];
-let selectedType = localStorage.getItem('selected_type') || 'all'; // <-- 단일 선택, 기본 all
-let searchMode   = localStorage.getItem('search_mode')  || 'title'; // 'title'|'all'
+let selectedType = localStorage.getItem('selected_type') || 'all';
+
+// 기존 저장값 호환: 'title'을 'files'로 자동 승격
+let savedMode = localStorage.getItem('search_mode');
+if(savedMode === 'title') savedMode = 'files';
+let searchMode = savedMode || 'files'; // 'files' | 'all'
 
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const termsOf = (q) => (q||'').split(/[,\s]+/g).map(s=>s.trim()).filter(Boolean);
@@ -72,26 +77,34 @@ function countMatches(hay, t){
 }
 
 function scoreDoc(d, terms){
-  const title = (d.title||'').toLowerCase();
-  const file  = (d.file ||'').toLowerCase();
+  const file  = (d.file ||'').toLowerCase();           // 파일명
+  const title = (d.title||'').toLowerCase();           // 표시제목(보조)
   const snip  = (d.snippet||'').toLowerCase();
   const cont  = (d.content||'').toLowerCase();
 
-  const inTitle = `${title} ${file}`;
-  const inBody  = `${snip} ${cont}`;
+  const inFiles = file;                                 // 파일만 모드: 파일명만
+  const inTitlePlus = `${file} ${title}`;               // all 모드에서 제목 가중
+  const inBody  = `${snip} ${cont}`;                    // 본문
 
-  // AND 포함
+  // AND 포함 조건
   const okAll = terms.every(q=>{
     const t = q.toLowerCase();
-    return (searchMode==='title') ? inTitle.includes(t) : inTitle.includes(t) || inBody.includes(t);
+    return (searchMode==='files')
+      ? inFiles.includes(t)
+      : inTitlePlus.includes(t) || inBody.includes(t);
   });
   if(!okAll) return -1;
 
+  // 가중치
   let s=0;
   for(const raw of terms){
     const t = raw.toLowerCase();
-    s += countMatches(inTitle,t)*3;
-    if(searchMode==='all') s += countMatches(snip,t)*2 + countMatches(cont,t)*1;
+    if(searchMode==='files'){
+      s += countMatches(inFiles, t) * 3;                // 파일명만
+    }else{
+      s += countMatches(inTitlePlus, t) * 3;            // 제목(파일명+표시제목)
+      s += countMatches(snip, t) * 2 + countMatches(cont, t) * 1;
+    }
   }
   return s;
 }
@@ -116,14 +129,32 @@ function render(rows, terms, query){
       (d.fileType==='pdf'  && d.page ) ? ` · p.${d.page}` :
       (d.fileType==='xlsx' && d.cell ) ? ` · ${d.sheet}!${d.cell}` :
       (d.fileType==='pptx' && d.slide) ? ` · slide ${d.slide}` : '';
-    const raw = (d.snippet || d.content || '').replace(/\s+/g,' ').slice(0,220);
+
+    // 제목은 파일명을 최우선으로 표시
+    const displayTitle = d.file || d.title || '';
+    const titleHtml = highlight(displayTitle, terms);
+
     const href = d.link + (d.link.includes('?') ? '&' : '?') + 'q=' + encodeURIComponent(query || '');
+
     const li = document.createElement('li');
     li.className = 'card';
-    li.innerHTML = `
-      <div class="meta"><span class="badge">${(d.fileType||'DOC').toUpperCase()}</span> ${d.file||''}${metaExtra}</div>
-      <div class="title"><a href="${href}" target="_blank" rel="noopener">${d.title}</a></div>
-      <div class="snippet">${highlight(raw, terms)}</div>`;
+
+    // 파일만 모드: 스니펫(본문) 완전히 제거
+    if(searchMode === 'files'){
+      li.innerHTML = `
+        <div class="meta"><span class="badge">${(d.fileType||'DOC').toUpperCase()}</span> ${displayTitle}${metaExtra}</div>
+        <div class="title"><a href="${href}" target="_blank" rel="noopener">${titleHtml}</a></div>
+      `;
+    } else {
+      // 파일+본문 모드: 스니펫 표시 + 하이라이트
+      const rawSnippet = (d.snippet || d.content || '').replace(/\s+/g,' ').slice(0, 220);
+      const snippetHtml = highlight(rawSnippet, terms);
+      li.innerHTML = `
+        <div class="meta"><span class="badge">${(d.fileType||'DOC').toUpperCase()}</span> ${displayTitle}${metaExtra}</div>
+        <div class="title"><a href="${href}" target="_blank" rel="noopener">${titleHtml}</a></div>
+        <div class="snippet">${snippetHtml}</div>
+      `;
+    }
     listEl.appendChild(li);
   }
 }
@@ -141,8 +172,8 @@ function buildTypeChips(){
     btn.addEventListener('click', ()=>{
       selectedType = key;
       localStorage.setItem('selected_type', selectedType);
-      // UI 토글
-      [...typeChipsEl.children].forEach(el=>el.classList.remove('active'));
+      // 하나만 active
+      [...typeChipsEl.querySelectorAll('.chip')].forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
       syncFilterVisibility();
       runSearch(qEl.value.trim());
@@ -150,18 +181,15 @@ function buildTypeChips(){
     typeChipsEl.appendChild(btn);
   };
 
-  // 전체
   make('all','전체', Object.values(countsAll).reduce((a,b)=>a+b,0));
-  // 개별
-  make('pdf','PDF', countsAll.pdf);
+  make('pdf','PDF',   countsAll.pdf);
   make('xlsx','XLSX', countsAll.xlsx);
   make('pptx','PPTX', countsAll.pptx);
   make('hwpx','HWPX', countsAll.hwpx);
-  make('txt','TXT', countsAll.txt);
+  make('txt','TXT',   countsAll.txt);
 }
 
 function syncFilterVisibility(){
-  // 단일선택 기준: xlsx일 때만 시트, pdf일 때만 페이지 범위 표시
   xlsxGroup.style.display = (selectedType==='xlsx') ? '' : 'none';
   pdfGroup.style.display  = (selectedType==='pdf')  ? '' : 'none';
 }
@@ -184,20 +212,15 @@ async function load(){
   buildTypeChips();
   syncFilterVisibility();
 
-  // 모드 버튼 초기
-  modeTitleBtn.classList.toggle('active', searchMode==='title');
+  // 모드 버튼 초기 상태
+  modeFilesBtn.classList.toggle('active', searchMode==='files');
   modeAllBtn.classList.toggle('active',   searchMode==='all');
 }
 
 function applyFilters(rows){
-  // 타입 단일 필터
   if(selectedType!=='all') rows = rows.filter(r => r.fileType===selectedType);
-
-  // 엑셀 시트(엑셀 선택 시에만 의미)
   const sheet = sheetSelect.value;
   if(selectedType==='xlsx' && sheet) rows = rows.filter(r => r.sheet===sheet);
-
-  // PDF 페이지 범위
   if(selectedType==='pdf'){
     const min = parseInt(pdfMin.value || ''); const max = parseInt(pdfMax.value || '');
     if(!isNaN(min)) rows = rows.filter(r => (r.page||0) >= min);
@@ -225,14 +248,14 @@ sheetSelect?.addEventListener('change', ()=> runSearch(qEl.value.trim()));
 pdfMin?.addEventListener('input',  ()=> runSearch(qEl.value.trim()));
 pdfMax?.addEventListener('input',  ()=> runSearch(qEl.value.trim()));
 
-modeTitleBtn?.addEventListener('click', ()=>{
-  searchMode = 'title'; localStorage.setItem('search_mode','title');
-  modeTitleBtn.classList.add('active'); modeAllBtn.classList.remove('active');
+modeFilesBtn?.addEventListener('click', ()=>{
+  searchMode = 'files'; localStorage.setItem('search_mode','files');
+  modeFilesBtn.classList.add('active'); modeAllBtn.classList.remove('active');
   runSearch(qEl.value.trim());
 });
 modeAllBtn?.addEventListener('click', ()=>{
   searchMode = 'all'; localStorage.setItem('search_mode','all');
-  modeAllBtn.classList.add('active'); modeTitleBtn.classList.remove('active');
+  modeAllBtn.classList.add('active'); modeFilesBtn.classList.remove('active');
   runSearch(qEl.value.trim());
 });
 
@@ -240,11 +263,10 @@ modeAllBtn?.addEventListener('click', ()=>{
 load().then(()=>{
   const init = new URL(location).searchParams.get('q') || '';
   if(init){ qEl.value = init; runSearch(init); }
-  // 초기 선택: 전체(또는 저장된 선택)
+  // 타입칩 active 표시 복구
   [...typeChipsEl.children].forEach(el=>el.classList.remove('active'));
-  const first = [...typeChipsEl.children].find(el => el.textContent.trim().startsWith(
-    (selectedType==='all'?'전체':selectedType.toUpperCase())
-  ));
-  if(first) first.classList.add('active');
+  const want = (selectedType==='all' ? '전체' : selectedType.toUpperCase());
+  const cur = [...typeChipsEl.children].find(el => (el.textContent||'').trim().startsWith(want));
+  if(cur) cur.classList.add('active');
   if(isAuthed()) qEl?.focus();
 });
