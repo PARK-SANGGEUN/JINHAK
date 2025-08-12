@@ -24,6 +24,7 @@ body{
 .wrap{max-width:1100px;margin:0 auto;padding:18px 20px}
 .head{display:flex;align-items:center;justify-content:space-between;padding-top:20px}
 
+/* Brand */
 .brand{display:flex;gap:14px;align-items:center}
 .logo{
   width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--brand-2));
@@ -42,6 +43,7 @@ body{
 .btn.ghost{background:transparent}
 .btn.primary{background:var(--brand);color:#fff;border-color:transparent}
 
+/* Hero */
 .hero{
   background:
     radial-gradient(1200px 400px at 0% 0%, #ffffffbb, transparent),
@@ -58,21 +60,33 @@ body{
   font-size:18px;background:var(--panel);box-shadow:var(--shadow)
 }
 
-/* ===== 2-column results ===== */
-.results-grid{
-  display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start;
+/* Toolbar & Chips */
+.toolbar{display:flex;flex-direction:column;gap:12px;margin-top:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  border:1px solid var(--border); background:var(--panel); color:var(--text);
+  padding:8px 12px; border-radius:999px; cursor:pointer; box-shadow:var(--shadow); font-size:14px;
 }
-.col-head{
-  font-weight:800; margin-bottom:10px; letter-spacing:-.2px; color:var(--muted)
+.chip.active{ background:var(--brand); border-color:transparent; color:#fff }
+.badge{display:inline-block;padding:2px 8px;font-size:12px;border-radius:999px;background:var(--badge);color:var(--brand);border:1px solid var(--border)}
+.filter-row{display:flex;gap:16px;flex-wrap:wrap}
+.filter-group{display:flex;align-items:center;gap:8px}
+.filter-group label{color:var(--muted);font-size:14px}
+.filter-group .range{display:flex;gap:6px;align-items:center}
+.filter-group input, .filter-group select{
+  padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:var(--panel)
 }
-.results{list-style:none;padding:0;margin:0;display:grid;gap:14px}
+
+/* Results */
+.result-head{display:flex;justify-content:space-between;align-items:center;margin-top:8px;margin-bottom:8px}
+.result-head .small{font-size:13px}
+.results{list-style:none;padding:0;margin:8px 0 90px;display:grid;gap:14px}
 .card{
   border:1px solid var(--border);background:var(--panel);border-radius:18px;padding:16px 18px;
   box-shadow:var(--shadow);transition:.12s ease
 }
 .card:hover{transform:translateY(-2px)}
 .meta{color:var(--muted);display:flex;gap:10px;align-items:center;margin-bottom:6px;font-size:13px;flex-wrap:wrap}
-.badge{display:inline-block;padding:3px 9px;font-size:12px;border-radius:999px;background:var(--badge);color:var(--brand);border:1px solid var(--border)}
 .title{font-weight:800;margin-bottom:4px}
 .title a{color:var(--text);text-decoration:none}
 .title a:hover{color:var(--brand)}
@@ -81,7 +95,7 @@ mark{background:var(--mark);padding:0 2px;border-radius:3px}
 
 .foot{color:var(--muted);border-top:1px dashed var(--border);margin-top:42px}
 
-/* 로그인 */
+/* Login */
 .auth{ position:fixed; inset:0; background:linear-gradient(180deg,#eef2ff88,#fafafa),rgba(0,0,0,.35);
   display:none; place-items:center; backdrop-filter: blur(6px); z-index:50 }
 .auth-card{ width:min(520px,92vw); background:var(--panel); border:1px solid var(--border);
@@ -93,7 +107,6 @@ mark{background:var(--mark);padding:0 2px;border-radius:3px}
 
 /* Responsive */
 @media (max-width: 900px){
-  .results-grid{ grid-template-columns:1fr; }
   .hero.center h1{ font-size:34px; }
 }
 :root, :root.dark { transition: background-color .2s ease, color .2s ease }
