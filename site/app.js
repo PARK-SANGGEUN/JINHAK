@@ -218,6 +218,7 @@ function syncFilterVisibility(){
 
 async function load(){
   try{
+    // site/index.json 을 기본으로 시도 (현재 워크플로 기준)
     const res = await fetch('index.json', { cache: 'no-store' });
     DATA = await res.json();
   }catch(e){
@@ -286,11 +287,10 @@ async function showPdfPreview(d, terms, query){
     const pdf = await pdfjsLib.getDocument(d.link).promise;
     const pageIndex = Math.max(1, Math.min(d.page || 1, pdf.numPages));
     const page = await pdf.getPage(pageIndex);
-    // 스케일은 컨테이너 폭 기준으로 적당히(축소 미리보기)
+    // 컨테이너 폭에 맞춰 축소 렌더
     const viewport = page.getViewport({ scale: 1.0 });
     const canvas = document.getElementById('pvCanvas');
     const ctx = canvas.getContext('2d');
-    // 폭을 화면에 맞추기
     const maxW = Math.min(canvas.parentElement.clientWidth, 900);
     const scale = maxW / viewport.width;
     const v2 = page.getViewport({ scale });
