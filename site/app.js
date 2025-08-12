@@ -1,8 +1,10 @@
 /* 기능 요약
- - 클릭 시 "해당 항목 아래"에 미리보기 펼침/접힘 (PDF 캔버스, XLSX iframe)
- - 클릭한 항목은 .active 스타일로 강조
- - 랭킹 강화: AND + 빈도 가중(파일>제목>스니펫>본문) + 정확 문구/순서 보너스
- - 속도 개선: 입력 디바운스, 상위 N 페이지만 표시(더 보기), PDF 렌더 캐시, DOM batch
+ - 클릭 시 결과 카드 아래 미리보기 펼침/접힘
+   · PDF: 해당 페이지 축소 렌더(캐싱)
+   · XLSX: 인덱서가 만든 초경량 HTML iframe 즉시 로딩(초고속)
+ - 클릭한 항목 강조(.active)
+ - 랭킹: AND + 빈도(파일>제목>스니펫>본문) + 정확문구 + 순서 보너스
+ - 속도: 입력 디바운스, 페이징(더 보기), 문자열 소문자 캐싱, DOM batch
 */
 
 //// 로그인/테마 ////
@@ -59,11 +61,12 @@ const TYPES = ['pdf','xlsx','pptx','hwpx','txt'];
 
 let selectedType = localStorage.getItem('selected_type') || 'all';
 let savedMode = localStorage.getItem('search_mode');
-if(savedMode === 'title') savedMode = 'files'; // 호환
+if(savedMode === 'title') savedMode = 'files';
 let searchMode = savedMode || 'files'; // 'files' | 'all'
 
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const termsOf = (q) => (q||'').split(/[,\s]+/g).map(s=>s.trim()).filter(Boolean);
+
 function highlight(text, terms){
   if(!terms.length) return text || '';
   let out = text || '';
@@ -79,7 +82,7 @@ function countMatches(hay, t){
   const m = (hay||'').match(re); return m ? m.length : 0;
 }
 
-//// 검색/점수 ////
+//// 점수 ////
 function scoreDoc(d, terms){
   const file  = (d._fileL || (d._fileL = (d.file||'').toLowerCase()));
   const title = (d._titleL|| (d._titleL= (d.title||'').toLowerCase()));
@@ -113,7 +116,7 @@ function scoreDoc(d, terms){
     }
   }
 
-  // 정확 문구 + 순서 보너스
+  // 정확 문구/순서 보너스
   const phrase = q.join(' ');
   if(phrase){
     if (inFiles.includes(phrase)) s += 50;
@@ -150,7 +153,6 @@ async function load(){
   modeFilesBtn.classList.toggle('active', searchMode==='files');
   modeAllBtn.classList.toggle('active',   searchMode==='all');
 
-  // 초기 검색어
   const init = new URL(location).searchParams.get('q') || '';
   if(init){ qEl.value = init; runSearch(init); }
 }
@@ -174,7 +176,6 @@ function buildTypeChips(){
     });
     typeChipsEl.appendChild(btn);
   };
-
   make('all','전체', Object.values(countsAll).reduce((a,b)=>a+b,0));
   make('pdf','PDF',   countsAll.pdf);
   make('xlsx','XLSX', countsAll.xlsx);
@@ -189,9 +190,9 @@ function syncFilterVisibility(){
 
 //// 필터 + 페이지네이션 ////
 let PAGE = 1;
-const PER_PAGE = 30;       // 1회 렌더 개수 (속도 ↑)
-let CURRENT = [];          // 정렬/필터 적용 전체
-moreBtn.addEventListener('click', ()=>{
+const PER_PAGE = 30;
+let CURRENT = [];
+document.getElementById('moreBtn').addEventListener('click', ()=>{
   PAGE++;
   render(CURRENT, termsOf(qEl.value.trim()), qEl.value.trim(), {append:true});
 });
@@ -210,7 +211,6 @@ function applyFilters(rows){
 
 //// 렌더 ////
 function render(rows, terms, query, opts={append:false}){
-  // 페이지 슬라이스
   const total = rows.length;
   const end = PAGE*PER_PAGE;
   const pageRows = rows.slice(opts.append ? (end-PER_PAGE) : 0, end);
@@ -221,9 +221,7 @@ function render(rows, terms, query, opts={append:false}){
   countsText.textContent = byType.map(([t,c])=>`${t.toUpperCase()}:${c}`).join(' · ');
   moreBtn.style.display = (end < total) ? 'inline-block' : 'none';
 
-  // DOM batch
   const frag = document.createDocumentFragment();
-
   if(!pageRows.length && !opts.append){
     const li = document.createElement('li');
     li.className = 'card';
@@ -239,7 +237,6 @@ function render(rows, terms, query, opts={append:false}){
       li.className = 'card';
       li.tabIndex = 0;
 
-      // 본문(모드별)
       let inner = '';
       if(searchMode==='files'){
         inner = `<div class="title"><a href="${href}" target="_blank" rel="noopener">${titleHtml}</a></div>`;
@@ -257,18 +254,12 @@ function render(rows, terms, query, opts={append:false}){
         `;
       }
 
-      // 인라인 미리보기 컨테이너
       inner += `<div class="inline-preview" data-kind="${d.fileType}"></div>`;
       li.innerHTML = inner;
 
-      // 클릭 시 토글 + 미리보기 로드
       li.addEventListener('click', (e)=>{
-        // 링크 자체 클릭은 새 탭(원래 동작) 유지
-        if(e.target && e.target.tagName === 'A') return;
-
-        // 다른 열린 미리보기 닫기
+        if(e.target && e.target.tagName === 'A') return; // 링크는 새 탭
         closeAllPreviewsExcept(li);
-
         li.classList.toggle('active');
         const pane = li.querySelector('.inline-preview');
         const open = pane.classList.toggle('open');
@@ -282,7 +273,6 @@ function render(rows, terms, query, opts={append:false}){
       frag.appendChild(li);
     }
   }
-
   if(opts.append) listEl.appendChild(frag); else listEl.replaceChildren(frag);
 }
 
@@ -292,14 +282,14 @@ function closeAllPreviewsExcept(exceptLi){
   });
 }
 
-//// PDF 미리보기 (inline, 캐싱) ////
+//// PDF 미리보기 (캐싱)
 const pdfCache = new Map(); // url -> PDFDocumentProxy
 async function loadPdfPreviewInto(pane, d){
-  pane.innerHTML = `<canvas class="pv-canvas"></canvas><div class="snippet muted" style="margin-top:6px"></div><div style="margin-top:8px"><a class="btn" href="${d.link}${d.page?`#page=${d.page}`:''}" target="_blank" rel="noopener">원본 열기</a></div>`;
+  pane.innerHTML = `<canvas class="pv-canvas"></canvas>
+    <div class="snippet muted" style="margin-top:6px"></div>
+    <div style="margin-top:8px"><a class="btn" href="${d.link}${d.page?`#page=${d.page}`:''}" target="_blank" rel="noopener">원본 열기</a></div>`;
   const canvas = pane.querySelector('canvas');
   const ctx = canvas.getContext('2d');
-
-  // 스니펫(이미 index.json에 있는 내용)
   pane.querySelector('.snippet').innerHTML = (d.snippet||'').replace(/\s+/g,' ').slice(0,240);
 
   try{
@@ -310,13 +300,10 @@ async function loadPdfPreviewInto(pane, d){
     }
     const pageIndex = Math.max(1, Math.min(d.page || 1, doc.numPages));
     const page = await doc.getPage(pageIndex);
-
-    // 컨테이너 폭 기준 스케일
     const base = page.getViewport({ scale: 1.0 });
     const maxW = Math.min(pane.clientWidth, 900);
     const scale = Math.max(0.5, Math.min(1.5, maxW / base.width));
     const vp = page.getViewport({ scale });
-
     canvas.width = vp.width; canvas.height = vp.height;
     await page.render({ canvasContext: ctx, viewport: vp, intent: 'display' }).promise;
   }catch(e){
@@ -325,32 +312,34 @@ async function loadPdfPreviewInto(pane, d){
   }
 }
 
-//// XLSX 미리보기 (inline iframe: xlsx.html) ////
+//// XLSX 미리보기 (사전 생성 HTML 사용)
 function loadXlsxPreviewInto(pane, d, query){
-  const url = `./xlsx.html?src=${encodeURIComponent(d.link)}&sheet=${encodeURIComponent(d.sheet||'')}&cell=${encodeURIComponent(d.cell||'')}&q=${encodeURIComponent(query||'')}`;
-  pane.innerHTML = `<iframe src="${url}" loading="lazy"></iframe>
-    <div style="margin-top:8px"><a class="btn" href="${d.link}" target="_blank" rel="noopener">원본 다운로드</a></div>`;
+  if (d.preview) {
+    pane.innerHTML = `<iframe src="${d.preview}" loading="lazy"></iframe>
+      <div style="margin-top:8px"><a class="btn" href="${d.link}" target="_blank" rel="noopener">엑셀 원본 다운로드</a></div>`;
+  } else {
+    // (백업용) 이전 방식
+    const url = `./xlsx.html?src=${encodeURIComponent(d.link)}&sheet=${encodeURIComponent(d.sheet||'')}&cell=${encodeURIComponent(d.cell||'')}&q=${encodeURIComponent(query||'')}`;
+    pane.innerHTML = `<iframe src="${url}" loading="lazy"></iframe>
+      <div style="margin-top:8px"><a class="btn" href="${d.link}" target="_blank" rel="noopener">원본 다운로드</a></div>`;
+  }
 }
 
-//// 실행 ////
+//// 검색 실행 ////
 function runSearch(query){
   const terms = termsOf(query);
   PAGE = 1;
 
   if(!terms.length){
-    CURRENT = [];
-    render(CURRENT, terms, query);
-    return;
+    CURRENT = []; render(CURRENT, terms, query); return;
   }
 
-  // 빠른 스코어링
   const scored = [];
   for(const d of DATA){
     const s = scoreDoc(d, terms);
     if(s>0) scored.push({...d, __score:s});
   }
   scored.sort((a,b)=> b.__score - a.__score);
-
   CURRENT = applyFilters(scored);
   render(CURRENT, terms, query);
 }
@@ -361,7 +350,6 @@ qEl?.addEventListener('input', debounce(e => runSearch(e.target.value.trim()), 1
 sheetSelect?.addEventListener('change', ()=> runSearch(qEl.value.trim()));
 pdfMin?.addEventListener('input',  debounce(()=> runSearch(qEl.value.trim()), 150));
 pdfMax?.addEventListener('input',  debounce(()=> runSearch(qEl.value.trim()), 150));
-
 modeFilesBtn?.addEventListener('click', ()=>{
   searchMode = 'files'; localStorage.setItem('search_mode','files');
   modeFilesBtn.classList.add('active'); modeAllBtn.classList.remove('active');
