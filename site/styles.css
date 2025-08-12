@@ -81,20 +81,16 @@ body{
 }
 .badge{display:inline-block;padding:2px 8px;font-size:12px;border-radius:999px;background:var(--badge);color:var(--brand);border:1px solid var(--border)}
 
-/* Preview */
-.preview{display:grid;gap:10px}
-.preview .pv-canvas{width:100%;max-height:60vh;border-radius:12px}
-.preview .snippet{line-height:1.7;font-size:15px}
-
 /* Results */
 .result-head{display:flex;justify-content:space-between;align-items:center;margin-top:8px;margin-bottom:8px}
 .result-head .small{font-size:13px}
-.results{list-style:none;padding:0;margin:8px 0 90px;display:grid;gap:14px}
+.results{list-style:none;padding:0;margin:8px 0 30px;display:grid;gap:12px}
 .card{
-  border:1px solid var(--border);background:var(--panel);border-radius:18px;padding:16px 18px;
+  border:1px solid var(--border);background:var(--panel);border-radius:14px;padding:14px 16px;
   box-shadow:var(--shadow);transition:.12s ease
 }
 .card:hover{transform:translateY(-2px)}
+.card.active{border-color:#3b82f6;background:#f0f7ff}
 .meta{color:var(--muted);display:flex;gap:10px;align-items:center;margin-bottom:6px;font-size:13px;flex-wrap:wrap}
 .title{font-weight:800;margin-bottom:4px}
 .title a{color:var(--text);text-decoration:none}
@@ -102,7 +98,15 @@ body{
 .snippet{line-height:1.7;font-size:15px}
 mark{background:var(--mark);padding:0 2px;border-radius:3px}
 
-.foot{color:var(--muted);border-top:1px dashed var(--border);margin-top:42px}
+/* Inline preview (접었다 펼치기) */
+.inline-preview{display:none;margin-top:10px}
+.inline-preview.open{display:block}
+.inline-preview .pv-canvas{width:100%;max-height:60vh;border-radius:12px}
+.inline-preview iframe{width:100%;height:60vh;border:0;border-radius:12px}
+
+/* Footer */
+.more-wrap{display:flex;justify-content:center}
+.foot{color:var(--muted);border-top:1px dashed var(--border);margin-top:24px}
 
 /* Login */
 .auth{ position:fixed; inset:0; background:linear-gradient(180deg,#eef2ff88,#fafafa),rgba(0,0,0,.35);
