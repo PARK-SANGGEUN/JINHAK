@@ -1,5 +1,6 @@
-// 로그인/테마 + 혼합 결과(타입 섞기) + 가중치 정렬(제목×3, 스니펫×2, 본문×1)
-// AND 검색 + 필터(파일형식 멀티 선택, XLSX 시트 선택, PDF 페이지 범위)
+// 로그인/테마 + 혼합 결과(파일 섞기) + 가중치 정렬(제목×3, 스니펫×2, 본문×1)
+// AND 검색 + 필터(파일형식 다중 선택, XLSX 시트 선택, PDF 페이지 범위)
+// 검색 모드(제목만 | 제목+본문) 토글
 
 //// ===== 로그인/테마 =====
 const authEl = document.getElementById('auth');
@@ -33,7 +34,7 @@ toggleTheme?.addEventListener('click', ()=>{
 });
 (function(){ if(localStorage.getItem('jinhak_theme')==='dark') document.documentElement.classList.add('dark'); })();
 
-//// ===== 검색 데이터/상태 =====
+//// ===== 검색 상태/DOM =====
 const qEl = document.getElementById('q');
 const listEl = document.getElementById('results');
 const typeChipsEl = document.getElementById('typeChips');
@@ -46,9 +47,13 @@ const pdfGroup = document.getElementById('pdfGroup');
 const pdfMin = document.getElementById('pdfMin');
 const pdfMax = document.getElementById('pdfMax');
 
+const modeTitleBtn = document.getElementById('modeTitle');
+const modeAllBtn   = document.getElementById('modeAll');
+
 let DATA = [];
-let TYPES = ['pdf','xlsx','pptx','hwpx','txt']; // 표시 순서
-let selectedTypes = new Set(TYPES); // 기본: 모두 선택
+let TYPES = ['pdf','xlsx','pptx','hwpx','txt']; // 보여줄 타입
+let selectedTypes = new Set(TYPES);            // 기본 전체
+let searchMode = localStorage.getItem('search_mode') || 'title'; // 'title' | 'all'
 
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -68,22 +73,33 @@ function countMatches(hay, t){
   const re = new RegExp(esc(t), 'gi');
   const m = hay.match(re); return m ? m.length : 0;
 }
+
 function scoreDoc(d, terms){
   const title = (d.title||'').toLowerCase();
+  const file  = (d.file ||'').toLowerCase(); // 파일명도 제목 가중 영역
   const snip  = (d.snippet||'').toLowerCase();
   const cont  = (d.content||'').toLowerCase();
 
-  // 모든 키워드가 최소 한 번은 들어가야 함(엄격 AND)
+  const inTitle = `${title} ${file}`;
+  const inBody  = `${snip} ${cont}`;
+
+  // 엄격 AND: 모드에 따라 포함 범위 달라짐
   const okAll = terms.every(tt=>{
-    tt = tt.toLowerCase();
-    return title.includes(tt) || snip.includes(tt) || cont.includes(tt);
+    const t = tt.toLowerCase();
+    return (searchMode==='title')
+      ? inTitle.includes(t)
+      : inTitle.includes(t) || inBody.includes(t);
   });
   if(!okAll) return -1;
 
+  // 가중치 점수
   let s=0;
-  for(const t of terms){
-    const tt=t.toLowerCase();
-    s += countMatches(title, tt)*3 + countMatches(snip, tt)*2 + countMatches(cont, tt)*1;
+  for(const raw of terms){
+    const t = raw.toLowerCase();
+    s += countMatches(inTitle, t) * 3;
+    if(searchMode==='all'){
+      s += countMatches(snip, t) * 2 + countMatches(cont, t) * 1;
+    }
   }
   return s;
 }
@@ -93,7 +109,6 @@ function render(rows, terms, query){
   listEl.innerHTML = '';
   totalBadge.textContent = rows.length.toString();
 
-  // 타입별 카운트 텍스트
   const byType = TYPES.map(t => [t, rows.filter(r => r.fileType===t).length]);
   countsText.textContent = byType.map(([t,c]) => `${t.toUpperCase()}: ${c}`).join(' · ');
 
@@ -124,28 +139,22 @@ function render(rows, terms, query){
 }
 
 //// ===== 타입 칩 =====
-function buildTypeChips(rows){
-  // rows 없을 때도 전체 카운트 계산
+function buildTypeChips(){
   const counts = Object.fromEntries(TYPES.map(t=>[t, 0]));
   for(const d of DATA){ if(d.fileType && d.fileType in counts) counts[d.fileType]++; }
 
   typeChipsEl.innerHTML = '';
-  // All 칩
+  // 전체
   const allChip = document.createElement('button');
   allChip.className = 'chip' + (selectedTypes.size===TYPES.length ? ' active' : '');
   allChip.textContent = `전체`;
   allChip.addEventListener('click', ()=>{
-    if(selectedTypes.size===TYPES.length){ // 모두 선택 상태면 모두 해제 -> 모두 선택으로 유지
-      selectedTypes = new Set(TYPES);
-    }else{
-      selectedTypes = new Set(TYPES);
-    }
-    syncFilterVisibility();
-    runSearch(qEl.value.trim());
+    selectedTypes = new Set(TYPES);
+    syncFilterVisibility(); runSearch(qEl.value.trim());
   });
   typeChipsEl.appendChild(allChip);
 
-  // 각 타입 칩
+  // 개별
   for(const t of TYPES){
     const btn = document.createElement('button');
     const active = selectedTypes.has(t);
@@ -153,26 +162,19 @@ function buildTypeChips(rows){
     btn.innerHTML = `${t.toUpperCase()} <span class="badge">${counts[t]}</span>`;
     btn.addEventListener('click', ()=>{
       if(selectedTypes.has(t)) selectedTypes.delete(t); else selectedTypes.add(t);
-      // 아무것도 선택 안 되면 전체 선택
       if(selectedTypes.size===0) selectedTypes = new Set(TYPES);
-      syncFilterVisibility();
-      runSearch(qEl.value.trim());
+      syncFilterVisibility(); runSearch(qEl.value.trim());
     });
     typeChipsEl.appendChild(btn);
   }
 }
 
 function syncFilterVisibility(){
-  // XLSX가 선택되어 있으면 시트 필터 보이기
-  const showXlsx = selectedTypes.has('xlsx');
-  xlsxGroup.style.display = showXlsx ? '' : 'none';
-
-  // PDF가 선택되어 있으면 페이지 범위 보이기
-  const showPdf = selectedTypes.has('pdf');
-  pdfGroup.style.display = showPdf ? '' : 'none';
+  xlsxGroup.style.display = selectedTypes.has('xlsx') ? '' : 'none';
+  pdfGroup.style.display  = selectedTypes.has('pdf')  ? '' : 'none';
 }
 
-//// ===== 로드/검색 =====
+//// ===== 로드 & 검색 =====
 async function load(){
   try{
     const res = await fetch('index.json', { cache: 'no-store' });
@@ -182,29 +184,29 @@ async function load(){
     DATA = [];
   }
 
-  // 시트 목록 수집
+  // 시트 목록
   const sheets = Array.from(new Set(
     DATA.filter(d=>d.fileType==='xlsx' && d.sheet).map(d=>d.sheet)
   )).sort((a,b)=> a.localeCompare(b, 'ko'));
   sheetSelect.innerHTML = `<option value="">전체</option>` + sheets.map(s=>`<option value="${s}">${s}</option>`).join('');
 
-  buildTypeChips(DATA);
-  syncFilterVisibility();
+  buildTypeChips(); syncFilterVisibility();
+
+  // 모드 버튼 초기화
+  modeTitleBtn.classList.toggle('active', searchMode==='title');
+  modeAllBtn.classList.toggle('active',   searchMode==='all');
 }
 
 function applyFilters(rows){
-  // 타입 필터
+  // 타입
   rows = rows.filter(r => selectedTypes.has(r.fileType));
-
-  // XLSX 시트 필터
+  // 시트
   const sheet = sheetSelect.value;
   if(sheet) rows = rows.filter(r => r.fileType!=='xlsx' || r.sheet===sheet);
-
   // PDF 페이지 범위
   const min = parseInt(pdfMin.value || ''); const max = parseInt(pdfMax.value || '');
   if(!isNaN(min)) rows = rows.filter(r => r.fileType!=='pdf' || (r.page || 0) >= min);
   if(!isNaN(max)) rows = rows.filter(r => r.fileType!=='pdf' || (r.page || 0) <= max);
-
   return rows;
 }
 
@@ -212,19 +214,13 @@ function runSearch(query){
   const terms = termsOf(query);
   if(!terms.length){ render(applyFilters([]), terms, query); return; }
 
-  // 스코어링
   const scored = [];
   for(const d of DATA){
     const s = scoreDoc(d, terms);
     if(s > 0) scored.push({ ...d, __score: s });
   }
-  // 정렬: 점수 내림차순 (등장횟수 총합이 많은 레코드가 위)
   scored.sort((a,b)=> b.__score - a.__score);
-
-  // 필터 적용
-  const filtered = applyFilters(scored);
-
-  render(filtered, terms, query);
+  render(applyFilters(scored), terms, query);
 }
 
 //// ===== 이벤트 =====
@@ -233,7 +229,18 @@ sheetSelect?.addEventListener('change', ()=> runSearch(qEl.value.trim()));
 pdfMin?.addEventListener('input',  ()=> runSearch(qEl.value.trim()));
 pdfMax?.addEventListener('input',  ()=> runSearch(qEl.value.trim()));
 
-//// ===== 부트 =====
+modeTitleBtn?.addEventListener('click', ()=>{
+  searchMode = 'title'; localStorage.setItem('search_mode','title');
+  modeTitleBtn.classList.add('active'); modeAllBtn.classList.remove('active');
+  runSearch(qEl.value.trim());
+});
+modeAllBtn?.addEventListener('click', ()=>{
+  searchMode = 'all'; localStorage.setItem('search_mode','all');
+  modeAllBtn.classList.add('active'); modeTitleBtn.classList.remove('active');
+  runSearch(qEl.value.trim());
+});
+
+//// ===== 시작 =====
 load().then(()=>{
   const init = new URL(location).searchParams.get('q') || '';
   if(init){ qEl.value = init; runSearch(init); }
