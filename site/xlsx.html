@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>엑셀 미리보기 · 강원오름</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css" />
+  <style>
+    .viewer-wrap{max-width:1000px;margin:0 auto;padding:18px 20px}
+    .bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+    .bar .meta{display:flex;gap:10px;flex-wrap:wrap;color:var(--muted)}
+    .grid{overflow:auto;border:1px solid var(--border);border-radius:14px;background:var(--panel);box-shadow:var(--shadow);max-height:70vh}
+    table{border-collapse:collapse;width:max(600px,100%);font-size:14px}
+    th,td{border:1px solid var(--border);padding:6px 8px;white-space:nowrap}
+    th{background:#f1f5f9;position:sticky;top:0;z-index:1}
+    .rowhead{position:sticky;left:0;background:#f1f5f9;z-index:1}
+    .hit{background:#fff3cd!important}
+    .target{background:#fde68a!important;outline:2px solid #f59e0b}
+    .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;background:#e5e7eb;border-radius:6px;padding:2px 6px}
+    .actions{display:flex;gap:8px}
+    .btn.small{padding:6px 10px;border-radius:10px}
+  </style>
+</head>
+<body>
+  <div class="viewer-wrap">
+    <div class="bar">
+      <div class="meta">
+        <strong id="fileName"></strong>
+        <span>• 시트: <span id="sheetName" class="kbd"></span></span>
+        <span>• 셀: <span id="cellAddr" class="kbd"></span></span>
+      </div>
+      <div class="actions">
+        <a id="downloadLink" class="btn small" target="_blank" rel="noopener">원본 다운로드</a>
+        <a class="btn ghost small" href="./index.html">← 검색으로</a>
+      </div>
+    </div>
+    <div class="grid" id="grid"><div class="card">불러오는 중…</div></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.20.2/dist/xlsx.full.min.js"></script>
+  <script src="./xlsx.js"></script>
+</body>
+</html>
