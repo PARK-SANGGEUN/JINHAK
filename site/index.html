@@ -2,29 +2,32 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <title>진학 데이터 검색</title>
+  <title>강원오름 · 진학 데이터 검색</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&family=Noto+Sans+KR:wght@300..900&display=swap" rel="stylesheet">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <!-- 로그인 -->
+  <!-- 로그인 오버레이 -->
   <div id="auth" class="auth">
     <div class="auth-card">
       <div class="brand">
-        <div class="logo">▲</div>
+        <img src="./logo.svg" alt="" class="logo-img" />
         <div>
-          <div class="brand-title">진학오름</div>
+          <div class="brand-title">강원오름</div>
           <div class="brand-sub">강원에서 시작하는 대학의 길</div>
         </div>
       </div>
       <h2>접속하기</h2>
-      <p class="muted">교사용 계정으로 로그인하세요.</p>
+      <p class="muted">교사용 계정으로 로그인하세요. (ID/PW: <b>teacher</b>)</p>
+
       <label>아이디</label>
       <input id="loginUser" class="input" placeholder="teacher" autocomplete="username" />
       <label>비밀번호</label>
       <input id="loginPass" class="input" type="password" placeholder="••••••••" autocomplete="current-password" />
+
       <button id="loginBtn" class="btn primary">로그인</button>
       <p id="loginMsg" class="error" style="display:none;">아이디 또는 비밀번호가 올바르지 않습니다.</p>
     </div>
@@ -33,9 +36,9 @@
   <!-- 헤더 -->
   <header class="wrap head">
     <div class="brand">
-      <div class="logo">▲</div>
+      <img src="./logo.svg" alt="" class="logo-img" />
       <div>
-        <div class="brand-title">진학오름</div>
+        <div class="brand-title">강원오름</div>
         <div class="brand-sub">진학 데이터 검색</div>
       </div>
     </div>
@@ -45,14 +48,21 @@
     </div>
   </header>
 
-  <!-- 히어로 -->
+  <!-- 히어로(이미지 없이 중앙 정렬) -->
   <section class="hero center">
     <div class="wrap hero-copy center">
       <h1>강원에서 시작하는<br><span>진학 데이터 검색</span></h1>
       <p class="hero-sub">PDF · PPTX · XLSX · HWPX까지, 필요한 정보만 정확하게.</p>
+
       <div class="searchbar hero-search">
         <input id="q" class="search" type="search"
                placeholder="예) 수시 강원대 분석 / 교과 전형 / 지역인재" autofocus />
+      </div>
+
+      <!-- 검색 모드 -->
+      <div class="mode-chips" role="group" aria-label="검색 모드">
+        <button id="modeTitle" class="chip active">제목만</button>
+        <button id="modeAll" class="chip">제목+본문</button>
       </div>
     </div>
   </section>
@@ -60,7 +70,7 @@
   <!-- 필터 바 -->
   <section class="wrap toolbar">
     <div class="chips" id="typeChips">
-      <!-- 동적 생성: All / PDF / XLSX / PPTX / HWPX / TXT (+ 각 타입별 개수) -->
+      <!-- All / PDF / XLSX / PPTX / HWPX / TXT  (동적 생성) -->
     </div>
 
     <div class="filter-row">
@@ -82,7 +92,7 @@
     </div>
   </section>
 
-  <!-- 결과(혼합 정렬, 단일 리스트) -->
+  <!-- 결과(타입 섞어서 정렬) -->
   <main class="wrap">
     <div class="result-head">
       <div>검색 결과 <span id="totalBadge" class="badge">0</span></div>
@@ -92,7 +102,7 @@
   </main>
 
   <footer class="wrap foot">
-    <small>© 진학오름 • GitHub Pages</small>
+    <small>© 강원오름 • GitHub Pages</small>
   </footer>
 
   <script src="./app.js"></script>
