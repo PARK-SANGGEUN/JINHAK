@@ -1,14 +1,13 @@
 /* ===== Tokens ===== */
 :root{
   --bg:#f6f7fb; --panel:#fff; --text:#0f172a; --muted:#64748b;
-  --brand:#2752ff; --brand-2:#14b8a6; --ring:#c7d2fe; --badge:#e8eefc;
-  --mark:#fff59d; --border:#e6e8ee; --glass:rgba(255,255,255,.55);
-  --shadow:0 12px 40px rgba(2,6,23,.08);
+  --brand:#2752ff; --brand-2:#14b8a6; --badge:#e8eefc;
+  --mark:#fff59d; --border:#e6e8ee; --shadow:0 12px 40px rgba(2,6,23,.08);
 }
 :root.dark{
   --bg:#0b1020; --panel:#0f162e; --text:#e5e7eb; --muted:#93a3b8;
-  --brand:#7aa2ff; --brand-2:#22d3ee; --ring:#2b3b77; --badge:#17213c;
-  --mark:#665c15; --border:#1f2a44; --glass:rgba(15,22,46,.55); --shadow:0 18px 50px rgba(0,0,0,.5);
+  --brand:#7aa2ff; --brand-2:#22d3ee; --badge:#17213c;
+  --mark:#665c15; --border:#1f2a44; --shadow:0 18px 50px rgba(0,0,0,.5);
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -29,62 +28,50 @@ body{
 .logo-img{width:46px;height:46px;border-radius:12px;box-shadow:var(--shadow)}
 .brand-title{font-weight:800;font-size:24px;letter-spacing:-.3px}
 .brand-sub{color:var(--muted);font-size:14px;margin-top:2px}
-
 .actions{display:flex;gap:10px}
-.btn{
-  border:1px solid var(--border);background:var(--panel);color:var(--text);
-  padding:9px 12px;border-radius:12px;cursor:pointer;box-shadow:var(--shadow);transition:.15s ease;
-  backdrop-filter:saturate(160%) blur(6px)
-}
+.btn{border:1px solid var(--border);background:var(--panel);color:var(--text);
+     padding:9px 12px;border-radius:12px;cursor:pointer;box-shadow:var(--shadow);transition:.15s}
 .btn:hover{transform:translateY(-1px)}
 .btn.ghost{background:transparent}
 .btn.primary{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;border-color:transparent}
 
 /* Hero */
-.hero{
-  background:
-    radial-gradient(1200px 400px at 0% 0%, #ffffffbb, transparent),
-    radial-gradient(1200px 400px at 100% 0%, #ffffff88, transparent);
-}
+.hero{background:
+  radial-gradient(1200px 400px at 0% 0%, #ffffffbb, transparent),
+  radial-gradient(1200px 400px at 100% 0%, #ffffff88, transparent);}
 .hero.center .wrap{ text-align:center; display:flex; flex-direction:column; align-items:center; }
 .hero.center h1{ font-size:40px; font-weight:800; line-height:1.2; }
-.hero-copy h1 span{background:linear-gradient(135deg,var(--brand),var(--brand-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-copy h1 span{background:linear-gradient(135deg,var(--brand),var(--brand-2));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
 .hero-sub{color:var(--muted);margin:6px 0 18px;font-size:16px}
 .hero-search{ width:min(640px,100%); }
 .searchbar{margin:18px 0 6px}
-.search{
-  width:100%;padding:18px 20px;border-radius:16px;border:1px solid var(--border);
-  font-size:18px;background:var(--panel);box-shadow:var(--shadow)
-}
+.search{ width:100%;padding:18px 20px;border-radius:16px;border:1px solid var(--border);
+         font-size:18px;background:var(--panel);box-shadow:var(--shadow) }
 
 /* Mode chips */
 .mode-chips{display:flex;gap:8px;margin-top:10px}
-.chip{
-  border:1px solid var(--border); background:var(--panel); color:var(--text);
-  padding:8px 12px; border-radius:999px; cursor:pointer; box-shadow:var(--shadow); font-size:14px;
-}
-.chip.active{ background:linear-gradient(135deg,var(--brand),var(--brand-2)); border-color:transparent; color:#fff }
+.chip{border:1px solid var(--border);background:#eef1f6;color:#334155;
+      padding:8px 12px;border-radius:999px;cursor:pointer;box-shadow:var(--shadow);font-size:14px}
+.chip.active{background:linear-gradient(135deg,var(--brand),var(--brand-2));border-color:transparent;color:#fff}
 
 /* Toolbar & Filters */
 .toolbar{display:flex;flex-direction:column;gap:12px;margin-top:6px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
+.badge{display:inline-block;padding:2px 8px;font-size:12px;border-radius:999px;
+       background:var(--badge);color:var(--brand);border:1px solid var(--border)}
 .filter-row{display:flex;gap:16px;flex-wrap:wrap}
 .filter-group{display:flex;align-items:center;gap:8px}
 .filter-group label{color:var(--muted);font-size:14px}
 .filter-group .range{display:flex;gap:6px;align-items:center}
-.filter-group input, .filter-group select{
-  padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:var(--panel)
-}
-.badge{display:inline-block;padding:2px 8px;font-size:12px;border-radius:999px;background:var(--badge);color:var(--brand);border:1px solid var(--border)}
+.filter-group input, .filter-group select{padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:var(--panel)}
 
 /* Results */
 .result-head{display:flex;justify-content:space-between;align-items:center;margin-top:8px;margin-bottom:8px}
 .result-head .small{font-size:13px}
 .results{list-style:none;padding:0;margin:8px 0 90px;display:grid;gap:14px}
-.card{
-  border:1px solid var(--border);background:var(--panel);border-radius:18px;padding:16px 18px;
-  box-shadow:var(--shadow);transition:.12s ease
-}
+.card{border:1px solid var(--border);background:var(--panel);border-radius:18px;padding:16px 18px;
+      box-shadow:var(--shadow);transition:.12s}
 .card:hover{transform:translateY(-2px)}
 .meta{color:var(--muted);display:flex;gap:10px;align-items:center;margin-bottom:6px;font-size:13px;flex-wrap:wrap}
 .title{font-weight:800;margin-bottom:4px}
@@ -100,13 +87,10 @@ mark{background:var(--mark);padding:0 2px;border-radius:3px}
   display:none; place-items:center; backdrop-filter: blur(6px); z-index:50 }
 .auth-card{ width:min(520px,92vw); background:var(--panel); border:1px solid var(--border);
   border-radius:22px; box-shadow:var(--shadow); padding:26px 24px }
-.auth-card h2{margin:12px 0 6px}
-.muted{color:var(--muted);margin:0 0 18px}
+.muted{color:var(--muted)}
 .input{ width:100%; padding:12px; border:1px solid var(--border); border-radius:12px; background:var(--panel); margin-bottom:10px }
 .error{ color:#ef4444; margin-top:8px }
 
 /* Responsive */
-@media (max-width: 900px){
-  .hero.center h1{ font-size:34px; }
-}
+@media (max-width: 900px){ .hero.center h1{ font-size:34px; } }
 :root, :root.dark { transition: background-color .2s ease, color .2s ease }
