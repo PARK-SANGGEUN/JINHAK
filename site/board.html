@@ -1,1 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>강원오름 · 온라인 상담 게시판</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css" />
+  <style>
+    /* 게시판 페이지 전용 약간의 보정 */
+    .wrap{max-width:900px}
+    .board-hero{padding:18px 20px}
+    .board-hero h1{margin:6px 0 4px;font-size:28px;font-weight:800}
+    .tip{color:var(--muted);font-size:14px}
+    .card{border:1px solid var(--border);background:var(--panel);border-radius:18px;padding:16px 18px;box-shadow:var(--shadow);margin-top:14px}
+  </style>
+</head>
+<body>
+  <!-- 헤더 -->
+  <header class="wrap head">
+    <div class="brand">
+      <img src="./logo.svg" alt="" class="logo-img" />
+      <div>
+        <div class="brand-title">강원오름</div>
+        <div class="brand-sub">온라인 상담 게시판</div>
+      </div>
+    </div>
+    <div class="actions">
+      <a class="btn ghost" href="./index.html">🔎 검색으로 돌아가기</a>
+      <button id="toggleTheme" class="btn ghost" title="테마 전환">🌓</button>
+    </div>
+  </header>
+
+  <section class="wrap board-hero">
+    <h1>온라인 상담 게시판</h1>
+    <p class="tip">※ 개인정보는 올리지 마세요. 닉네임/가명 권장 · 글/댓글 작성에는 GitHub 로그인이 필요합니다.</p>
+  </section>
+
+  <main class="wrap">
+    <div class="card">
+      <!-- Giscus 연결 (사용자가 제공한 값 그대로) -->
+      <script src="https://giscus.app/client.js"
+        data-repo="PARK-SANGGEUN/JINHAK"
+        data-repo-id="R_kgDOPcGfRQ"
+        data-category="온라인 상담"
+        data-category-id="DIC_kwDOPcGfRc4CuEfm"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+      </script>
+      <noscript>댓글을 보려면 자바스크립트를 켜주세요.</noscript>
+    </div>
+  </main>
+
+  <script>
+    // 테마 동기화(선택사항): 검색 페이지에서 다크모드면 Giscus도 다크로
+    try {
+      const dark = localStorage.getItem('jinhak_theme') === 'dark';
+      if (dark) document.documentElement.classList.add('dark');
+    } catch(e) {}
+  </script>
+</body>
+</html>
 
