@@ -52,11 +52,12 @@
     <div class="wrap hero-copy center">
       <h1>강원에서 시작하는<br><span>진학 데이터 검색</span></h1>
       <p class="hero-sub">PDF · PPTX · XLSX · HWPX까지, 필요한 정보만 정확하게.</p>
+
       <div class="searchbar hero-search">
         <input id="q" class="search" type="search"
                placeholder="예) 수시 강원대 분석 / 교과 전형 / 지역인재" autofocus />
       </div>
-      <!-- 검색 모드 -->
+
       <div class="mode-chips" role="group" aria-label="검색 모드">
         <button id="modeFiles" class="chip active">파일제목</button>
         <button id="modeAll" class="chip">파일+본문</button>
@@ -85,13 +86,6 @@
     </div>
   </section>
 
-  <!-- PDF 미리보기 -->
-  <section class="wrap">
-    <div id="preview" class="card preview">
-      <div class="muted">PDF 결과에 마우스를 올리거나 클릭하면 여기에 <b>축소 이미지 + 스니펫</b>이 보입니다.</div>
-    </div>
-  </section>
-
   <!-- 결과 -->
   <main class="wrap">
     <div class="result-head">
@@ -99,6 +93,10 @@
       <div class="muted small" id="countsText"></div>
     </div>
     <ul id="results" class="results"></ul>
+
+    <div class="more-wrap">
+      <button id="moreBtn" class="btn">더 보기</button>
+    </div>
   </main>
 
   <footer class="wrap foot">
