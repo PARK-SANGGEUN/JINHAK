@@ -41,7 +41,7 @@
       </div>
     </div>
     <div class="actions">
-      <a href="./board.html" class="btn primary" title="온라인 상담 게시판">💬 온라인 상담</a>
+      <a href="./board.html" class="btn primary">💬 온라인 상담</a>
       <button id="toggleTheme" class="btn ghost" title="테마 전환">🌓</button>
       <button id="logoutBtn" class="btn ghost">로그아웃</button>
     </div>
@@ -52,12 +52,10 @@
     <div class="wrap hero-copy center">
       <h1>강원에서 시작하는<br><span>진학 데이터 검색</span></h1>
       <p class="hero-sub">PDF · PPTX · XLSX · HWPX까지, 필요한 정보만 정확하게.</p>
-
       <div class="searchbar hero-search">
         <input id="q" class="search" type="search"
-               placeholder="예) 수시 강원대 분석 / 교과 전형 / 지역인재" autofocus />
+               placeholder="예) 강원대 지역인재 컴퓨터 수능 최저" autofocus />
       </div>
-
       <div class="mode-chips" role="group" aria-label="검색 모드">
         <button id="modeFiles" class="chip active">파일제목</button>
         <button id="modeAll" class="chip">파일+본문</button>
@@ -68,13 +66,11 @@
   <!-- 필터 바 -->
   <section class="wrap toolbar">
     <div class="chips" id="typeChips"><!-- 동적 생성 --></div>
-
     <div class="filter-row">
       <div class="filter-group" id="xlsxGroup" style="display:none;">
         <label>엑셀 시트</label>
         <select id="sheetSelect"><option value="">전체</option></select>
       </div>
-
       <div class="filter-group" id="pdfGroup" style="display:none;">
         <label>PDF 페이지</label>
         <div class="range">
@@ -93,10 +89,7 @@
       <div class="muted small" id="countsText"></div>
     </div>
     <ul id="results" class="results"></ul>
-
-    <div class="more-wrap">
-      <button id="moreBtn" class="btn">더 보기</button>
-    </div>
+    <div class="more-wrap"><button id="moreBtn" class="btn">더 보기</button></div>
   </main>
 
   <footer class="wrap foot">
@@ -108,7 +101,6 @@
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
   </script>
-
   <script src="./app.js"></script>
 </body>
 </html>
